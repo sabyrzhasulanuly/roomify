@@ -25,6 +25,10 @@ export const Upload = ({ onComplete }: { onComplete?: (data: string) => void }) 
       setError(`File size exceeds ${MAX_UPLOAD_SIZE / (1024 * 1024)} MB limit.`)
       return
     }
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
     setError(null)
     setFile(file)
     setProgress(0)
@@ -37,7 +41,10 @@ export const Upload = ({ onComplete }: { onComplete?: (data: string) => void }) 
         setProgress((prev) => {
           const next = prev + PROGRESS_STEP
           if (next >= 100) {
-            if (intervalRef.current) clearInterval(intervalRef.current)
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current)
+              intervalRef.current = null
+            }
             setTimeout(() => {
               onComplete?.(base64Data)
             }, REDIRECT_DELAY_MS)
