@@ -5,23 +5,25 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-} from "react-router";
+} from 'react-router'
 
-import type { Route } from "./+types/root";
-import "./app.css";
+import type { Route } from './+types/root'
+import './app.css'
+import { useEffect, useState } from 'react'
+import { getCurrentUser, signIn as puterSignIn, signOut as puterSignOut } from '../lib/puter.actions'
 
 export const links: Route.LinksFunction = () => [
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
+  { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
+    rel: 'preconnect',
+    href: 'https://fonts.gstatic.com',
+    crossOrigin: 'anonymous',
   },
   {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
+    rel: 'stylesheet',
+    href: 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap',
   },
-];
+]
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -38,27 +40,71 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Scripts />
       </body>
     </html>
-  );
+  )
+}
+
+const DEFAULT_AUTH_STATE: AuthState = {
+  isSignedIn: false,
+  userName: null,
+  userId: null,
 }
 
 export default function App() {
-  return <Outlet />;
+  const [authState, setAuthState] = useState<AuthState>(DEFAULT_AUTH_STATE)
+
+  const refreshAuth = async () => {
+    try {
+      const user = await getCurrentUser()
+
+      setAuthState({
+        isSignedIn: !!user,
+        userName: user?.username || null,
+        userId: user?.uuid || null,
+      })
+
+      return !!user
+    } catch {
+      setAuthState(DEFAULT_AUTH_STATE)
+
+      return false
+    }
+  }
+
+  useEffect(() => {
+    refreshAuth()
+  }, [])
+
+  const signIn = async () => {
+    await puterSignIn()
+    return await refreshAuth()
+  }
+
+  const signOut = async () => {
+    puterSignOut()
+    return await refreshAuth()
+  }
+
+  return (
+    <main className="min-h-screen bg-background text-foreground relative z-10">
+      <Outlet context={{ ...authState, refreshAuth, signIn, signOut }} />
+    </main>
+  )
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = "Oops!";
-  let details = "An unexpected error occurred.";
-  let stack: string | undefined;
+  let message = 'Oops!'
+  let details = 'An unexpected error occurred.'
+  let stack: string | undefined
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error";
+    message = error.status === 404 ? '404' : 'Error'
     details =
       error.status === 404
-        ? "The requested page could not be found."
-        : error.statusText || details;
+        ? 'The requested page could not be found.'
+        : error.statusText || details
   } else if (import.meta.env.DEV && error && error instanceof Error) {
-    details = error.message;
-    stack = error.stack;
+    details = error.message
+    stack = error.stack
   }
 
   return (
@@ -71,5 +117,5 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
         </pre>
       )}
     </main>
-  );
+  )
 }
