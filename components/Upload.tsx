@@ -9,13 +9,15 @@ export const Upload = ({ onComplete }: { onComplete?: (data: string) => void }) 
   const [isDragging, setIsDragging] = useState(false)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const completionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { isSignedIn } = useOutletContext<AuthContext>()
 
   useEffect(() => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)
+      if (completionTimeoutRef.current) clearTimeout(completionTimeoutRef.current)
     }
   }, [])
 
@@ -28,6 +30,10 @@ export const Upload = ({ onComplete }: { onComplete?: (data: string) => void }) 
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
       intervalRef.current = null
+    }
+    if (completionTimeoutRef.current) {
+      clearTimeout(completionTimeoutRef.current)
+      completionTimeoutRef.current = null
     }
     setError(null)
     setFile(file)
@@ -45,7 +51,7 @@ export const Upload = ({ onComplete }: { onComplete?: (data: string) => void }) 
               clearInterval(intervalRef.current)
               intervalRef.current = null
             }
-            setTimeout(() => {
+            completionTimeoutRef.current = setTimeout(() => {
               onComplete?.(base64Data)
             }, REDIRECT_DELAY_MS)
             return 100
