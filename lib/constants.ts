@@ -15,6 +15,7 @@ export const PROGRESS_INTERVAL_MS = 100
 export const PROGRESS_STEP = 5
 
 // UI Constants
+export const MAX_UPLOAD_SIZE = 50 * 1024 * 1024 // 50MB
 export const GRID_OVERLAY_SIZE = '60px 60px'
 export const GRID_COLOR = '#3B82F6'
 

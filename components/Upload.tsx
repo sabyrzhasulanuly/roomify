@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 import { CheckCircle2, ImageIcon, UploadIcon } from 'lucide-react'
 import { useOutletContext } from 'react-router'
-import { PROGRESS_INTERVAL_MS, PROGRESS_STEP, REDIRECT_DELAY_MS } from '../lib/constants'
+import { PROGRESS_INTERVAL_MS, PROGRESS_STEP, REDIRECT_DELAY_MS, MAX_UPLOAD_SIZE } from '../lib/constants'
 
 export const Upload = ({ onComplete }: { onComplete?: (data: string) => void }) => {
   const [file, setFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [error, setError] = useState<string | null>(null)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
   const { isSignedIn } = useOutletContext<AuthContext>()
@@ -20,6 +21,11 @@ export const Upload = ({ onComplete }: { onComplete?: (data: string) => void }) 
 
   const processFile = (file: File) => {
     if (!isSignedIn) return
+    if (file.size > MAX_UPLOAD_SIZE) {
+      setError(`File size exceeds ${MAX_UPLOAD_SIZE / (1024 * 1024)} MB limit.`)
+      return
+    }
+    setError(null)
     setFile(file)
     setProgress(0)
 
@@ -100,7 +106,11 @@ export const Upload = ({ onComplete }: { onComplete?: (data: string) => void }) 
                 'Sign in or sign up with Puter to upload'
               ) }
             </p>
-            <p className="help">Maximum file size 50 MB.</p>
+            {error ? (
+              <p className="help" style={{ color: '#ef4444' }}>{error}</p>
+            ) : (
+              <p className="help">Maximum file size {MAX_UPLOAD_SIZE / (1024 * 1024)} MB.</p>
+            )}
           </div>
         </div>
       ) : (
